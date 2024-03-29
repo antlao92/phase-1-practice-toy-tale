@@ -23,17 +23,15 @@ fetch("http://localhost:3000/toys", {
   return response.json();
 })
 .then(function(data) {
-  createToyCards(data);
+  data.forEach(toy=>createToyCard(toy))
 })
 .catch(function(error) {
   // Handle any errors
 });
 
 //function to create toy cards
-function createToyCards(toys) {
-  const toyCollection = document.getElementById('toy-collection');
-
-  toys.forEach(function(toy) {
+function createToyCard(toy) {
+    const toyCollection = document.getElementById('toy-collection');
     const card = document.createElement('div');
     card.setAttribute('class', 'card');
 
@@ -52,35 +50,103 @@ function createToyCards(toys) {
     likeBtn.setAttribute('id', toy.id);
     likeBtn.innerText = 'Like ❤️';
 
-    card.appendChild(name);
-    card.appendChild(image);
-    card.appendChild(likes);
-    card.appendChild(likeBtn);
+    card.append(name, image, likes, likeBtn);
 
-    toyCollection.appendChild(card);
-  });
+    toyCollection.append(card);
 }
 
-//Post new toys
-fetch('http://localhost:3000/toys', {
+const form = document.querySelector(".add-toy-form")
+const nameInput = document.getElementById('name-input');
+const imgInput = document.getElementById("image-input");
+
+form.addEventListener("submit", (e)=>{
+    e.preventDefault();
+    //Post new toys
+
+    fetch('http://localhost:3000/toys', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
   body: JSON.stringify({
-    name: 'New Toy',
-    description: 'A description of the new toy',
-    image: 'https://example.com/new-toy-image.jpg',
+    name: nameInput.value,
+    image: imgInput.value,
     likes: 0,
   }),
 })
   .then(response => response.json())
   .then(data => {
     // Handle the response data here, such as updating the DOM
-    console.log(data);
+    createToyCard(data);
   })
   .catch(error => {
     // Handle any errors that occurred during the request
     console.error(error);
   });
+})
+
+//increase a toy's like 
+document.addEventListener("click", (e)=>{
+  if(e.target.classList.contains("like-btn")){
+    const toyId = e.target.id;
+    const currentLikesElement = e.target.previousElementSibling ; // Get the element displaying the current likes
+    const currentLikes = parseInt(currentLikesElement.innerText); // Parse the current likes count
+    const newLikes = currentLikes + 1; // Calculate the new number of likes
+
+    fetch(`http://localhost:3000/toys/${toyId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        likes: newLikes,
+      }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        // Handle the response data here, such as updating the DOM
+        currentLikesElement.innerText = `${data.likes} Likes`;
+      })
+      .catch(error => {
+        // Handle any errors that occurred during the request
+        console.error(error);
+      });
+    }
+    
+  })
+
+/*
+
+// Add event listener for the "Like" button click
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("like-btn")) {
+    const toyId = e.target.id; // Get the toy's id from the button's id attribute
+
+    const currentLikesElement = e.target.previousSibling; // Get the element displaying the current likes
+    const currentLikes = parseInt(currentLikesElement.innerText); // Parse the current likes count
+
+    const newLikes = currentLikes + 1; // Calculate the new number of likes
+
+    fetch(`http://localhost:3000/toys/${toyId}`, { // Update the URL with the toy's id
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        likes: newLikes,
+      }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        // Update the likes count in the DOM
+        currentLikesElement.innerText = `${data.likes} Likes`;
+      })
+      .catch(error => {
+        console.error(error);
+      });
+  }
+});
+*/
